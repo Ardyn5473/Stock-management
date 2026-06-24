@@ -1,0 +1,623 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI 次フェーズ投資レジャー</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+:root{
+  --ink:#0E141A;--panel:#161F28;--panel2:#1C2832;--line:#2A3742;
+  --txt:#E9EFF4;--muted:#8595A2;--faint:#5C6B77;
+  --gold:#E0A640;--gold-dim:#a87f33;
+  --buy:#56B981;--watch:#E0A640;--hold:#64727E;
+  --bad:#E0664F;--mid:#E0A640;--good:#56B981;--info:#5BA9D6;--r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--txt);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px 120px}
+
+header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--ink) 72%,transparent);padding:16px 0 10px;backdrop-filter:blur(6px)}
+.hwrap{max-width:920px;margin:0 auto;padding:0 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.brand .ey{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.brand h1{margin:3px 0 0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.brand .sub{margin:3px 0 0;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.syncdot{width:7px;height:7px;border-radius:50%;background:var(--faint);display:inline-block}
+.syncdot.ok{background:var(--buy)} .syncdot.busy{background:var(--gold);animation:pulse 1s infinite}
+.syncdot.err{background:var(--bad)}
+@keyframes pulse{50%{opacity:.3}}
+.hbtns{display:flex;gap:7px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.icbtn{width:36px;height:36px;border-radius:10px;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);transition:.15s;font-size:14px}
+.icbtn:hover{color:var(--txt);border-color:var(--gold-dim)}
+.addbtn{padding:0 14px;height:36px;border-radius:10px;background:var(--gold);color:#1a1206;font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px}
+.addbtn:hover{filter:brightness(1.07)}
+
+.tabs{display:flex;gap:6px;margin:4px 0 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:4px}
+.tab{flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px;border-radius:9px;color:var(--muted);transition:.15s}
+.tab.on{background:var(--panel2);color:var(--txt)}
+.tab .cnt{font-size:11px;color:var(--gold);margin-left:5px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 11px}
+.stat .k{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.stat .v{font-size:20px;font-weight:600;margin-top:2px}
+.stat .v small{font-size:11px;color:var(--muted);font-weight:500}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{font-size:12px;padding:6px 11px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted);transition:.15s;white-space:nowrap}
+.chip.on{background:var(--panel2);color:var(--txt);border-color:var(--gold-dim)}
+.spacer{flex:1}
+select.sort{font-size:12px;background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:6px 10px;border-radius:9px}
+
+.grid{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px 15px 13px;animation:rise .3s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.card{animation:none}}
+.crow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tname{font-size:16px;font-weight:600;line-height:1.2}
+.tmeta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ttag{font-size:10px;padding:2px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--gold)}
+.badge{font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.b-buy{background:rgba(86,185,129,.15);color:var(--buy);border:1px solid rgba(86,185,129,.35)}
+.b-watch{background:rgba(224,166,64,.14);color:var(--watch);border:1px solid rgba(224,166,64,.35)}
+.b-hold{background:rgba(100,114,126,.14);color:#9aa8b3;border:1px solid rgba(100,114,126,.35)}
+
+.pxline{display:flex;align-items:baseline;gap:8px;margin:11px 0 0}
+.px{font-size:22px;font-weight:600}
+.pxsub{font-size:10.5px;color:var(--faint)}
+.live{font-size:9px;padding:1px 6px;border-radius:5px;background:rgba(91,169,214,.15);color:var(--info);border:1px solid rgba(91,169,214,.3);letter-spacing:.04em}
+
+.scoreline{display:flex;align-items:center;gap:12px;margin:11px 0 4px}
+.scoreval{font-size:28px;font-weight:600;line-height:1;min-width:50px}
+.scoreval small{font-size:11px;color:var(--faint);font-weight:500}
+.bar{flex:1;height:7px;border-radius:99px;background:var(--panel2);overflow:hidden;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;transition:width .5s ease}
+.hyp{font-size:12.5px;color:#c2ced8;line-height:1.55;margin:10px 0 2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.hyp.open{-webkit-line-clamp:unset}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.m{background:var(--panel2);border-radius:10px;padding:8px 9px}
+.m .k{font-size:9.5px;color:var(--faint);letter-spacing:.04em}
+.m .v{font-size:14px;font-weight:600;margin-top:2px}
+.up-pos{color:var(--buy)} .up-neg{color:var(--bad)}
+
+.ladder{margin:12px 0 4px}
+.ladder .lab{display:flex;justify-content:space-between;font-size:9.5px;color:var(--faint);margin-bottom:6px}
+.track{position:relative;height:30px}
+.track .line{position:absolute;left:0;right:0;top:14px;height:2px;background:var(--line)}
+.track .zone{position:absolute;top:13px;height:4px;border-radius:2px;opacity:.5}
+.tick{position:absolute;top:6px;width:1px;height:18px;transform:translateX(-.5px)}
+.tick.buy{background:var(--buy)} .tick.tp{background:var(--gold)} .tick.stop{background:var(--bad)}
+.now{position:absolute;top:2px;transform:translateX(-50%);text-align:center}
+.now .dot{width:11px;height:11px;border-radius:50%;background:var(--txt);border:2px solid var(--ink);margin:0 auto;box-shadow:0 0 0 3px rgba(233,239,244,.12)}
+.now .pl{font-size:9.5px;color:var(--txt);margin-top:2px;font-weight:600;white-space:nowrap}
+.lkey{display:flex;gap:12px;font-size:9.5px;color:var(--muted);margin-top:7px;flex-wrap:wrap}
+.lkey span{display:flex;align-items:center;gap:4px}
+.dotk{width:7px;height:7px;border-radius:2px;display:inline-block}
+.signal{margin-top:11px;font-size:12px;font-weight:600;padding:8px 11px;border-radius:10px;display:flex;align-items:center;gap:7px}
+.sig-buy{background:rgba(86,185,129,.12);color:var(--buy)}
+.sig-tp{background:rgba(224,166,64,.12);color:var(--gold)}
+.sig-stop{background:rgba(224,102,79,.12);color:var(--bad)}
+
+.cact{display:flex;gap:8px;justify-content:flex-end;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.cact button{font-size:12px;color:var(--muted);padding:6px 12px;border-radius:8px;transition:.15s}
+.cact button:hover{color:var(--txt);background:var(--panel2)}
+.cact .del:hover{color:var(--bad)}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty h3{color:var(--txt);font-weight:600;margin:0 0 6px;font-size:16px}
+.empty p{font-size:13px;margin:0 0 6px}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(6,10,14,.74);backdrop-filter:blur(4px);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.ov{align-items:center}}
+.sheet{background:var(--panel);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;border:1px solid var(--line);animation:up .26s ease}
+@media(min-width:640px){.sheet{border-radius:22px}}
+@keyframes up{from{transform:translateY(22px);opacity:.6}to{transform:none;opacity:1}}
+.shead{position:sticky;top:0;background:var(--panel);padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;z-index:2}
+.shead h2{margin:0;font-size:16px;font-weight:600}
+.sbody{padding:16px 18px 20px}
+.grp{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:18px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.grp:first-child{margin-top:0}
+.f{margin-bottom:11px}
+.f label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px}
+.f input,.f select,.f textarea{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 11px;font-size:13.5px}
+.f textarea{resize:vertical;min-height:60px;line-height:1.5}
+.f input:focus,.f textarea:focus,.f select:focus{outline:none;border-color:var(--gold-dim)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.suffix{position:relative}
+.suffix span{position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--faint)}
+.suffix input{padding-right:30px}
+.sl{margin-bottom:13px}
+.sl .top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.sl .top b{font-weight:600;color:var(--txt)} .sl .top .vv{color:var(--gold);font-weight:600}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:99px;background:var(--panel2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--gold);border:2px solid var(--panel);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--gold);border:2px solid var(--panel);cursor:pointer}
+.livebox{background:var(--panel2);border-radius:12px;padding:12px 14px;margin:14px 0 4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.livebox .ls{font-size:11px;color:var(--muted)}
+.livebox .lv{font-size:24px;font-weight:600}
+.foot{position:sticky;bottom:0;background:var(--panel);padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px}
+.foot button{flex:1;padding:12px;border-radius:11px;font-size:14px;font-weight:600}
+.cancel{background:var(--panel2);color:var(--muted)}
+.save{background:var(--gold);color:#1a1206}
+.note{font-size:11px;color:var(--faint);line-height:1.55;margin-top:8px}
+.hint{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.45}
+.wsum{font-size:11px;margin-top:6px}
+.wsum.ok{color:var(--buy)} .wsum.no{color:var(--bad)}
+.disclaimer{text-align:center;font-size:10.5px;color:var(--faint);margin-top:26px;line-height:1.6}
+
+/* auth */
+.authwrap{max-width:380px;margin:8vh auto 0;padding:0 20px;text-align:center}
+.authwrap .ey{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.authwrap h1{font-size:22px;margin:8px 0 4px}
+.authwrap p{font-size:13px;color:var(--muted);margin:0 0 22px;line-height:1.6}
+.authcard{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:left}
+.authcard label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+.authcard input{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:12px;font-size:14px;margin-bottom:12px}
+.authcard button{width:100%;padding:12px;border-radius:11px;background:var(--gold);color:#1a1206;font-weight:600;font-size:14px}
+.authmsg{font-size:12px;margin-top:12px;color:var(--muted);text-align:center;line-height:1.5}
+.banner{background:rgba(224,102,79,.12);border:1px solid rgba(224,102,79,.3);color:#f0a795;font-size:12px;padding:10px 14px;border-radius:12px;margin:10px auto;max-width:888px;line-height:1.5}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:11px 18px;border-radius:12px;font-size:13px;z-index:90;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:up .25s ease}
+</style>
+
+<div id="app"></div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =========================================================
+   1) SETUP — Supabaseの値をここに入れてください
+   ========================================================= */
+const SUPABASE_URL = "https://zaxjojpmeqrvrocivedo.supabase.co";   // ← Project URL
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpheGpvanBtZXFydnJvY2l2ZWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI5NzQsImV4cCI6MjA5Nzg3ODk3NH0.KLmmif5Dxgt-FS872Oskm4Hl8WKvOSFfW0ab8oaebvM";                 // ← anon public key
+/* ========================================================= */
+
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = v => (v===''||v==null||isNaN(parseFloat(v)))?null:parseFloat(v);
+const fmt = (v,d=0)=> v==null?'—':v.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = v => v==null?'—':(v*100).toFixed(1)+'%';
+const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;$('#toastRoot').appendChild(t);setTimeout(()=>t.remove(),2600);};
+
+const THEMES=['電力・エネルギーインフラ','フィジカルAI・ロボティクス','AI収益化・AIエージェント','継続インフラ本流（半導体・MLCC）'];
+const SCOREKEYS=[['growth','市場成長性'],['moat','競争優位'],['momentum','業績モメンタム'],['fin','財務健全性'],['val','ﾊﾞﾘｭｴｰｼｮﾝ妥当性'],['fit','テーマ適合度']];
+const DEFAULT_CFG={weights:{growth:.25,moat:.20,momentum:.20,fin:.10,val:.15,fit:.10},thresholds:{buyScore:70,buyUpside:.20,watch:55},line_user_id:'',line_enabled:false};
+
+let sb=null, user=null, entries=[], cfg=structuredClone(DEFAULT_CFG);
+let tab='ledger', filterTheme='all', sortBy='score';
+
+/* ---- compute ---- */
+function score100(e){const w=cfg.weights,s=e.scores||{};let a=0;for(const[k]of SCOREKEYS)a+=(s[k]??3)*(w[k]??0);return Math.round(a/5*100);}
+function livePrice(e){return num(e.current_price)??num(e.price);}
+function upside(e){const p=livePrice(e),t=num(e.target);return(p&&t)?t/p-1:null;}
+function verdict(e){const sc=score100(e),up=upside(e),t=cfg.thresholds;
+  if(up!=null&&sc>=t.buyScore&&up>=t.buyUpside)return['買い候補','b-buy'];
+  if(sc>=t.watch)return['監視','b-watch'];return['見送り','b-hold'];}
+function scoreColor(sc){return sc>=70?'var(--good)':sc>=55?'var(--mid)':'var(--bad)';}
+// price-vs-plan signal
+function signal(e){
+  const p=livePrice(e);if(p==null)return null;
+  const stop=num(e.stop),b1=num(e.buy1),b2=num(e.buy2),t1=num(e.tp1),t2=num(e.tp2),t3=num(e.tp3);
+  if(stop!=null&&p<=stop)return['stop','損切り水準に接触'];
+  if(t3!=null&&p>=t3)return['tp','利確③に到達'];
+  if(t2!=null&&p>=t2)return['tp','利確②に到達'];
+  if(t1!=null&&p>=t1)return['tp','利確①に到達'];
+  const lowBuy=Math.min(...[b1,b2].filter(x=>x!=null).concat([Infinity]));
+  if(lowBuy!==Infinity&&p<=lowBuy)return['buy','押し目買いゾーンに到達'];
+  return null;
+}
+// ---- portfolio P&L ----
+function shares(e){return num(e.shares);}
+function avgCost(e){return num(e.avg_cost);}
+function cost(e){const s=shares(e),a=avgCost(e);return(s!=null&&a!=null)?s*a:null;}
+function mktVal(e){const s=shares(e),p=livePrice(e);return(s!=null&&p!=null)?s*p:null;}
+function pnl(e){const c=cost(e),v=mktVal(e);return(c!=null&&v!=null)?v-c:null;}
+function pnlPct(e){const a=avgCost(e),p=livePrice(e);return(a!=null&&p!=null&&a!=0)?p/a-1:null;}
+function pnlBlock(e){
+  const v=mktVal(e),pl=pnl(e),pp=pnlPct(e);
+  if(v==null)return'';
+  const c=pl==null?'':pl>=0?'up-pos':'up-neg';
+  return `<div class="metrics" style="grid-template-columns:repeat(3,1fr);margin-top:-2px">
+    <div class="m"><div class="k">評価額</div><div class="v mono">¥${fmt(v)}</div></div>
+    <div class="m"><div class="k">評価損益</div><div class="v mono ${c}">${pl==null?'—':(pl>=0?'+':'')+'¥'+fmt(pl)}</div></div>
+    <div class="m"><div class="k">含み益率</div><div class="v mono ${pp==null?'':pp>=0?'up-pos':'up-neg'}">${pp==null?'—':(pp>=0?'+':'')+pct(pp)}</div></div>
+  </div>`;
+}
+
+/* =========================================================
+   Auth
+   ========================================================= */
+function renderAuth(msg){
+  $('#app').innerHTML=`<div class="authwrap">
+    <div class="ey">Research Ledger</div>
+    <h1>AI 次フェーズ投資レジャー</h1>
+    <p>メールで同期。同じメールでログインすれば、どの端末でも同じ台帳が見られます。</p>
+    <div class="authcard" id="ac">
+      <label>メールアドレス</label>
+      <input id="email" type="email" inputmode="email" placeholder="you@example.com" autocomplete="email">
+      <button id="sendBtn">確認コードを送る</button>
+      <div class="authmsg" id="amsg">${msg||''}</div>
+    </div></div>`;
+  $('#sendBtn').onclick=sendCode;
+  $('#email').onkeydown=e=>{if(e.key==='Enter')sendCode();};
+}
+async function sendCode(){
+  const email=$('#email').value.trim();
+  if(!email){$('#amsg').textContent='メールアドレスを入力してください。';return;}
+  $('#sendBtn').disabled=true;$('#amsg').textContent='送信中…';
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
+  if(error){$('#amsg').textContent='送信エラー: '+error.message;$('#sendBtn').disabled=false;return;}
+  $('#ac').innerHTML=`<label>${esc(email)} に届いた6桁コード</label>
+    <input id="code" inputmode="numeric" maxlength="6" placeholder="123456">
+    <button id="verBtn">ログイン</button>
+    <div class="authmsg" id="amsg">メールの確認コードを入力してください。</div>`;
+  $('#verBtn').onclick=()=>verify(email);
+  $('#code').onkeydown=e=>{if(e.key==='Enter')verify(email);};
+  $('#code').focus();
+}
+async function verify(email){
+  const token=$('#code').value.trim();
+  $('#verBtn').disabled=true;$('#amsg').textContent='確認中…';
+  const {data,error}=await sb.auth.verifyOtp({email,token,type:'email'});
+  if(error){$('#amsg').textContent='コードが違うようです: '+error.message;$('#verBtn').disabled=false;return;}
+  user=data.user; await boot();
+}
+
+/* =========================================================
+   Data sync (Supabase)
+   ========================================================= */
+const setSync=s=>{const d=$('#syncdot');if(d)d.className='syncdot '+s;};
+function rowToEntry(r){return{id:r.id,name:r.name||'',code:r.code||'',market:r.market||'東証',theme:r.theme||THEMES[0],
+  hyp:r.hyp||'',premise:r.premise||'',mktCagr:r.mkt_cagr??'',salesCagr:r.sales_cagr??'',opm:r.opm??'',backlog:r.backlog??'',
+  share:r.share||'',price:r.price??'',per:r.per??'',peg:r.peg??'',yld:r.yld??'',
+  target:r.target??'',buy1:r.buy1??'',buy2:r.buy2??'',tp1:r.tp1??'',tp2:r.tp2??'',tp3:r.tp3??'',stop:r.stop??'',review:r.review||'',
+  scores:{growth:r.s_growth??3,moat:r.s_moat??3,momentum:r.s_momentum??3,fin:r.s_fin??3,val:r.s_val??3,fit:r.s_fit??3},
+  shares:r.shares??'',avg_cost:r.avg_cost??'',
+  current_price:r.current_price??'',price_updated_at:r.price_updated_at};}
+function entryToRow(e){return{user_id:user.id,name:e.name,code:e.code,market:e.market,theme:e.theme,hyp:e.hyp,premise:e.premise,
+  mkt_cagr:num(e.mktCagr),sales_cagr:num(e.salesCagr),opm:num(e.opm),backlog:num(e.backlog),share:e.share,
+  price:num(e.price),per:num(e.per),peg:num(e.peg),yld:num(e.yld),shares:num(e.shares),avg_cost:num(e.avg_cost),
+  target:num(e.target),buy1:num(e.buy1),buy2:num(e.buy2),tp1:num(e.tp1),tp2:num(e.tp2),tp3:num(e.tp3),stop:num(e.stop),review:e.review,
+  s_growth:e.scores.growth,s_moat:e.scores.moat,s_momentum:e.scores.momentum,s_fin:e.scores.fin,s_val:e.scores.val,s_fit:e.scores.fit,
+  updated_at:new Date().toISOString()};}
+
+async function loadAll(){
+  setSync('busy');
+  const {data,error}=await sb.from('holdings').select('*').order('created_at',{ascending:true});
+  if(error){setSync('err');toast('読み込みエラー: '+error.message);return;}
+  entries=(data||[]).map(rowToEntry);
+  const {data:s}=await sb.from('settings').select('*').eq('user_id',user.id).maybeSingle();
+  if(s){cfg={weights:Object.assign({},DEFAULT_CFG.weights,s.weights||{}),thresholds:Object.assign({},DEFAULT_CFG.thresholds,s.thresholds||{}),line_user_id:s.line_user_id||'',line_enabled:!!s.line_enabled};}
+  setSync('ok');
+}
+async function saveEntry(e){
+  setSync('busy');const row=entryToRow(e);
+  let res;
+  if(e.id&&!e.__new) res=await sb.from('holdings').update(row).eq('id',e.id).select().single();
+  else res=await sb.from('holdings').insert(row).select().single();
+  if(res.error){setSync('err');toast('保存エラー: '+res.error.message);return;}
+  const ent=rowToEntry(res.data);const i=entries.findIndex(x=>x.id===ent.id);
+  if(i>=0)entries[i]=ent;else entries.push(ent);
+  setSync('ok');render();
+}
+async function delEntry(id){
+  const e=entries.find(x=>x.id===id);
+  if(!confirm(`「${e?.name||'この銘柄'}」を削除しますか？`))return;
+  setSync('busy');
+  const {error}=await sb.from('holdings').delete().eq('id',id);
+  if(error){setSync('err');toast('削除エラー: '+error.message);return;}
+  entries=entries.filter(x=>x.id!==id);setSync('ok');render();
+}
+async function saveCfg(){
+  setSync('busy');
+  const {error}=await sb.from('settings').upsert({user_id:user.id,weights:cfg.weights,thresholds:cfg.thresholds,line_user_id:cfg.line_user_id,line_enabled:cfg.line_enabled,updated_at:new Date().toISOString()});
+  if(error){setSync('err');toast('設定保存エラー: '+error.message);return;}
+  setSync('ok');
+}
+async function refreshPrices(){
+  setSync('busy');toast('株価を更新中…');
+  const {data,error}=await sb.functions.invoke('fetch-prices');
+  if(error){setSync('err');toast('価格更新エラー: '+error.message);return;}
+  await loadAll();render();
+  toast(`株価を更新しました（${data?.updated??'?'}件）`);
+}
+
+/* =========================================================
+   Render
+   ========================================================= */
+function shell(){
+  $('#app').innerHTML=`
+   <header><div class="hwrap">
+     <div class="brand"><div class="ey">Research Ledger</div><h1>AI 次フェーズ投資レジャー</h1>
+       <div class="sub"><span class="syncdot ok" id="syncdot"></span><span id="syncLabel">同期済み</span></div></div>
+     <div class="hbtns">
+       <button class="icbtn" id="pxBtn" title="株価を更新">&#8635;</button>
+       <button class="icbtn" id="csvBtn" title="CSV出力">&#8681;</button>
+       <button class="icbtn" id="cfgBtn" title="配点・基準">&#9881;</button>
+       <button class="icbtn" id="outBtn" title="ログアウト">&#9099;</button>
+       <button class="addbtn" id="addBtn">＋ 追加</button>
+     </div></div></header>
+   <div class="wrap">
+     <div class="tabs">
+       <button class="tab" data-tab="ledger">台帳</button>
+       <button class="tab" data-tab="screen">スクリーナー<span class="cnt" id="scnt"></span></button>
+       <button class="tab" data-tab="port">資産</button>
+     </div>
+     <div id="view"></div>
+     <div class="disclaimer">本ツールは分析整理のための雛形です。投資助言ではありません。株価は終値ベースの自動更新で遅延があり得ます。最終判断はご自身で。</div>
+   </div>`;
+  $('#addBtn').onclick=()=>openEditor(null);
+  $('#cfgBtn').onclick=openConfig;
+  $('#pxBtn').onclick=refreshPrices;
+  $('#csvBtn').onclick=exportCSV;
+  $('#outBtn').onclick=async()=>{await sb.auth.signOut();location.reload();};
+  $('#view').addEventListener('click',()=>{},false);
+  document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render();});
+}
+function render(){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  const buys=entries.filter(e=>verdict(e)[0]==='買い候補').length;
+  const sigs=entries.filter(e=>signal(e)).length;
+  $('#scnt').textContent=(buys+sigs)?`(${buys+sigs})`:'';
+  if(tab==='ledger')renderLedger();else if(tab==='screen')renderScreen();else renderPortfolio();
+}
+function renderLedger(){
+  const n=entries.length,buys=entries.filter(e=>verdict(e)[0]==='買い候補').length;
+  const avg=n?Math.round(entries.reduce((a,e)=>a+score100(e),0)/n):0;
+  const priced=entries.filter(e=>livePrice(e)!=null).length;
+  let list=entries.filter(e=>filterTheme==='all'||e.theme===filterTheme);
+  list.sort((a,b)=>sortBy==='name'?(a.name||'').localeCompare(b.name||'','ja'):sortBy==='upside'?(upside(b)??-9)-(upside(a)??-9):score100(b)-score100(a));
+  const chips=['all',...THEMES].map(t=>`<button class="chip ${filterTheme===t?'on':''}" data-th="${esc(t)}">${esc(t==='all'?'すべて':t.replace('（半導体・MLCC）',''))}</button>`).join('');
+  $('#view').innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="k">登録</div><div class="v mono">${n}<small> 件</small></div></div>
+      <div class="stat"><div class="k">買い候補</div><div class="v mono" style="color:var(--buy)">${buys}</div></div>
+      <div class="stat"><div class="k">平均スコア</div><div class="v mono" style="color:${scoreColor(avg)}">${avg}</div></div>
+      <div class="stat"><div class="k">株価取得</div><div class="v mono">${priced}<small>/${n}</small></div></div>
+    </div>
+    <div class="filters">${chips}<div class="spacer"></div>
+      <select class="sort" id="sortSel">
+        <option value="score" ${sortBy==='score'?'selected':''}>スコア順</option>
+        <option value="upside" ${sortBy==='upside'?'selected':''}>上昇余地順</option>
+        <option value="name" ${sortBy==='name'?'selected':''}>名前順</option></select></div>
+    <div class="grid">${list.length?list.map(card).join(''):emptyLedger()}</div>`;
+  wireCards();
+  $('#sortSel')&&($('#sortSel').onchange=e=>{sortBy=e.target.value;render();});
+  document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{filterTheme=b.dataset.th;render();});
+}
+function emptyLedger(){return `<div class="empty"><h3>まだ銘柄がありません</h3><p>「＋ 追加」から、仮説を数字つきで書いて始めましょう。</p></div>`;}
+function renderScreen(){
+  const buyCands=entries.filter(e=>verdict(e)[0]==='買い候補').sort((a,b)=>score100(b)-score100(a));
+  const sigs=entries.map(e=>[e,signal(e)]).filter(x=>x[1]);
+  const order={stop:0,buy:1,tp:2};
+  sigs.sort((a,b)=>order[a[1][0]]-order[b[1][0]]);
+  let html='';
+  html+=`<div class="grp" style="margin-top:4px">売買シグナル（現在値が計画ラインに到達）</div>`;
+  html+= sigs.length? `<div class="grid">${sigs.map(([e])=>card(e)).join('')}</div>`
+    : `<div class="empty"><p>いまアクションが必要な銘柄はありません。<br>株価を更新すると、押し目買い・利確・損切りの到達を自動で拾います。</p></div>`;
+  html+=`<div class="grp" style="margin-top:22px">基準クリア（買い候補）</div>`;
+  html+= buyCands.length? `<div class="grid">${buyCands.map(card).join('')}</div>`
+    : `<div class="empty"><p>基準（スコア≧${cfg.thresholds.buyScore} かつ 上昇余地≧${pct(cfg.thresholds.buyUpside)}）を満たす銘柄はまだありません。</p></div>`;
+  $('#view').innerHTML=html;wireCards();
+}
+function renderPortfolio(){
+  const held=entries.filter(e=>mktVal(e)!=null);
+  if(!held.length){
+    $('#view').innerHTML=`<div class="empty"><h3>保有データがありません</h3>
+      <p>銘柄の編集で「保有株数」と「平均取得単価」を入れ、株価を更新すると、ここに評価損益・含み益率・構成比が出ます。</p></div>`;
+    return;
+  }
+  const totCost=held.reduce((a,e)=>a+(cost(e)||0),0);
+  const totVal=held.reduce((a,e)=>a+(mktVal(e)||0),0);
+  const totPnl=totVal-totCost;
+  const totPct=totCost>0?totVal/totCost-1:null;
+  const plc=totPnl>=0?'var(--buy)':'var(--bad)';
+  // theme allocation
+  const byTheme={};held.forEach(e=>{byTheme[e.theme]=(byTheme[e.theme]||0)+mktVal(e);});
+  const themeColors={'電力・エネルギーインフラ':'#5BA9D6','フィジカルAI・ロボティクス':'#56B981','AI収益化・AIエージェント':'#E0A640','継続インフラ本流（半導体・MLCC）':'#B08CD6'};
+  const alloc=Object.entries(byTheme).sort((a,b)=>b[1]-a[1]).map(([t,v])=>{
+    const w=totVal>0?v/totVal*100:0;const col=themeColors[t]||'var(--gold)';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">
+        <span style="color:var(--muted)">${esc(t.replace('（半導体・MLCC）',''))}</span>
+        <span class="mono" style="color:var(--txt)">${w.toFixed(1)}%　¥${fmt(v)}</span></div>
+      <div style="height:8px;border-radius:99px;background:var(--panel2);overflow:hidden">
+        <div style="height:100%;width:${w}%;background:${col};border-radius:99px"></div></div></div>`;
+  }).join('');
+  // holdings sorted by value
+  const rows=held.slice().sort((a,b)=>mktVal(b)-mktVal(a)).map(e=>{
+    const v=mktVal(e),pp=pnlPct(e),pl=pnl(e),w=totVal>0?v/totVal*100:0;
+    const c=pp==null?'var(--muted)':pp>=0?'var(--buy)':'var(--bad)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${esc(e.name||'(無名)')} ${e.code?`<span class="mono" style="font-size:11px;color:var(--muted)">${esc(e.code)}</span>`:''}</div>
+        <div style="font-size:10.5px;color:var(--faint);margin-top:2px">${fmt(shares(e))}株 @¥${fmt(avgCost(e))}　構成比 ${w.toFixed(1)}%</div>
+      </div>
+      <div style="text-align:right">
+        <div class="mono" style="font-size:14px;font-weight:600">¥${fmt(v)}</div>
+        <div class="mono" style="font-size:11px;color:${c}">${pp==null?'':(pp>=0?'+':'')+pct(pp)}　${pl==null?'':(pl>=0?'+':'')+'¥'+fmt(pl)}</div>
+      </div></div>`;
+  }).join('');
+  $('#view').innerHTML=`
+    <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+      <div class="stat"><div class="k">評価額合計</div><div class="v mono">¥${fmt(totVal)}</div></div>
+      <div class="stat"><div class="k">取得額合計</div><div class="v mono">¥${fmt(totCost)}</div></div>
+      <div class="stat"><div class="k">評価損益</div><div class="v mono" style="color:${plc}">${totPnl>=0?'+':''}¥${fmt(totPnl)}</div></div>
+      <div class="stat"><div class="k">含み益率</div><div class="v mono" style="color:${plc}">${totPct==null?'—':(totPct>=0?'+':'')+pct(totPct)}</div></div>
+    </div>
+    <div class="grp" style="margin-top:6px">テーマ別 構成比</div>
+    <div style="margin-bottom:8px">${alloc}</div>
+    <div class="grp" style="margin-top:18px">保有銘柄（評価額順）</div>
+    ${rows}
+    <div class="note" style="margin-top:6px">評価額・損益は現在値（自動更新の終値）×保有株数で計算。株価未取得の銘柄は集計に含まれません。</div>`;
+}
+function wireCards(){
+  document.querySelectorAll('.hyp').forEach(h=>h.onclick=()=>h.classList.toggle('open'));
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEditor(b.dataset.edit));
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delEntry(b.dataset.del));
+}
+function card(e){
+  const sc=score100(e),up=upside(e),[vt,vc]=verdict(e),p=livePrice(e),sig=signal(e);
+  const auto=num(e.current_price)!=null;
+  return `<div class="card">
+    <div class="crow"><div>
+      <div class="tname">${esc(e.name||'(無名)')}</div>
+      <div class="tmeta"><span class="ttag">${esc(e.theme.replace('（半導体・MLCC）',''))}</span>
+        ${e.code?`<span class="mono">${esc(e.code)}</span>`:''}${e.market?`<span>${esc(e.market)}</span>`:''}</div>
+    </div><span class="badge ${vc}">${vt}</span></div>
+    ${p!=null?`<div class="pxline"><span class="px mono">${fmt(p)}</span>
+      ${auto?`<span class="live">自動更新</span>`:''}<span class="pxsub">${e.price_updated_at?'更新 '+new Date(e.price_updated_at).toLocaleDateString('ja-JP'):'手入力'}</span></div>`:''}
+    <div class="scoreline"><div class="scoreval mono" style="color:${scoreColor(sc)}">${sc}<small>/100</small></div>
+      <div class="bar"><i style="width:${sc}%;background:${scoreColor(sc)}"></i></div></div>
+    <div class="hyp">${esc(e.hyp||'仮説が未記入です')}</div>
+    <div class="metrics">
+      <div class="m"><div class="k">上昇余地</div><div class="v mono ${up==null?'':up>=0?'up-pos':'up-neg'}">${up==null?'—':(up>=0?'+':'')+pct(up)}</div></div>
+      <div class="m"><div class="k">売上CAGR</div><div class="v mono">${e.salesCagr!==''&&e.salesCagr!=null?e.salesCagr+'%':'—'}</div></div>
+      <div class="m"><div class="k">営業利益率</div><div class="v mono">${e.opm!==''&&e.opm!=null?e.opm+'%':'—'}</div></div>
+      <div class="m"><div class="k">PER</div><div class="v mono">${e.per!==''&&e.per!=null?e.per+'x':'—'}</div></div>
+    </div>
+    ${pnlBlock(e)}
+    ${ladder(e)}
+    ${sig?`<div class="signal sig-${sig[0]}">▸ ${sig[1]}</div>`:''}
+    <div class="cact"><button data-edit="${e.id}">編集</button><button class="del" data-del="${e.id}">削除</button></div>
+  </div>`;
+}
+function ladder(e){
+  const pts=[['stop',num(e.stop),'stop'],['buy2',num(e.buy2),'buy'],['buy1',num(e.buy1),'buy'],['tp1',num(e.tp1),'tp'],['tp2',num(e.tp2),'tp'],['tp3',num(e.tp3),'tp']].filter(p=>p[1]!=null);
+  const price=livePrice(e);
+  if(price==null&&pts.length<2)return'';
+  const all=[...pts.map(p=>p[1]),...(price!=null?[price]:[])];
+  let lo=Math.min(...all),hi=Math.max(...all);if(hi===lo){hi=lo*1.05+1;lo=lo*0.95;}
+  const pos=v=>((v-lo)/(hi-lo))*100;
+  const buys=pts.filter(p=>p[2]==='buy').map(p=>p[1]),tps=pts.filter(p=>p[2]==='tp').map(p=>p[1]);
+  let zones='';
+  if(buys.length)zones+=`<div class="zone" style="left:${pos(Math.min(...buys))}%;width:${pos(Math.max(...buys))-pos(Math.min(...buys))}%;background:var(--buy)"></div>`;
+  if(tps.length)zones+=`<div class="zone" style="left:${pos(Math.min(...tps))}%;width:${pos(Math.max(...tps))-pos(Math.min(...tps))}%;background:var(--gold)"></div>`;
+  const ticks=pts.map(p=>`<div class="tick ${p[2]}" style="left:${pos(p[1])}%"></div>`).join('');
+  const now=price!=null?`<div class="now" style="left:${Math.max(4,Math.min(96,pos(price)))}%"><div class="dot"></div><div class="pl mono">${fmt(price)}</div></div>`:'';
+  return `<div class="ladder"><div class="lab"><span>${fmt(lo)}</span><span>価格ライン</span><span>${fmt(hi)}</span></div>
+    <div class="track"><div class="line"></div>${zones}${ticks}${now}</div>
+    <div class="lkey"><span><i class="dotk" style="background:var(--buy)"></i>押し目買い</span><span><i class="dotk" style="background:var(--bad)"></i>損切り</span><span><i class="dotk" style="background:var(--gold)"></i>利確</span><span><i class="dotk" style="background:var(--txt)"></i>現在値</span></div></div>`;
+}
+
+/* ---- editor ---- */
+function blank(){return{__new:true,id:null,theme:THEMES[0],name:'',code:'',market:'東証',hyp:'',premise:'',mktCagr:'',salesCagr:'',opm:'',backlog:'',share:'',price:'',per:'',peg:'',yld:'',shares:'',avg_cost:'',scores:{growth:3,moat:3,momentum:3,fin:3,val:3,fit:3},target:'',buy1:'',buy2:'',tp1:'',tp2:'',tp3:'',stop:'',review:''};}
+function openEditor(id){
+  const e=id?structuredClone(entries.find(x=>x.id===id)):blank();
+  const tf=(k,l,suf,ph='')=>`<div class="f"><label>${l}</label>${suf?`<div class="suffix"><input data-k="${k}" value="${esc(e[k])}" inputmode="decimal" placeholder="${ph}"><span>${suf}</span></div>`:`<input data-k="${k}" value="${esc(e[k])}" placeholder="${ph}">`}</div>`;
+  const sliders=SCOREKEYS.map(([k,l])=>`<div class="sl"><div class="top"><b>${l}</b><span class="vv" id="sv_${k}">${e.scores[k]}</span></div><input type="range" min="1" max="5" step="1" value="${e.scores[k]}" data-sk="${k}"></div>`).join('');
+  $('#modalRoot').innerHTML=`<div class="ov" id="ov"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="shead"><h2>${id?'銘柄を編集':'銘柄を追加'}</h2><button class="icbtn" id="x">&#10005;</button></div>
+    <div class="sbody">
+      <div class="grp">基本</div>
+      <div class="f"><label>銘柄名</label><input data-k="name" value="${esc(e.name)}" placeholder="例：◯◯電機"></div>
+      <div class="f2"><div class="f"><label>テーマ</label><select data-k="theme">${THEMES.map(t=>`<option ${e.theme===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="f2">${tf('code','コード','','例 6981')}${tf('market','市場','')}</div></div>
+      <div class="hint">株価の自動更新には、コード（例 6981）と市場（東証/米国）が必要です。</div>
+      <div class="f" style="margin-top:11px"><label>仮説・ストーリー（必ず数字で）</label><textarea data-k="hyp" placeholder="例：TAMが年20%成長→売上CAGR15%→受注残+30%が続く限り上昇">${esc(e.hyp)}</textarea></div>
+      <div class="f"><label>投資前提（崩れたら撤退）</label><input data-k="premise" value="${esc(e.premise)}" placeholder="例：受注残の前年比がマイナス転換"></div>
+      <div class="grp">ファンダメンタルズ</div>
+      <div class="f4">${tf('mktCagr','市場CAGR','%')}${tf('salesCagr','売上CAGR','%')}${tf('opm','営業利益率','%')}${tf('backlog','受注残前年比','%')}</div>
+      <div class="f"><label>競争地位・シェア</label><input data-k="share" value="${esc(e.share)}" placeholder="例：国内上位／高い参入障壁"></div>
+      <div class="grp">バリュエーション</div>
+      <div class="f4">${tf('price','現在株価(手入力)','')}${tf('per','PER','x')}${tf('peg','PEG','x')}${tf('yld','配当利回り','%')}</div>
+      <div class="hint">現在株価は自動更新が入ると上書きされます（手入力は初期値）。</div>
+      <div class="grp">保有・損益</div>
+      <div class="f2">${tf('shares','保有株数','株')}${tf('avg_cost','平均取得単価','')}</div>
+      <div class="hint">保有株数と平均取得単価を入れると、現在値から評価損益・含み益率を自動計算し、資産タブに集計します。</div>
+      <div class="grp">将来性スコア（1〜5）</div>${sliders}
+      <div class="livebox"><div><div class="ls">将来性スコア</div><div class="lv mono" id="liveScore">—</div></div>
+        <div style="text-align:right"><div class="ls">判定</div><div id="liveVerdict"></div></div></div>
+      <div class="grp">売買計画（先に決め打ち）</div>
+      <div class="f"><label>妥当株価（目標）</label><input data-k="target" value="${esc(e.target)}" inputmode="decimal" placeholder="ここから上昇余地を自動計算"></div>
+      <div class="f2">${tf('buy1','押し目買い①','')}${tf('buy2','押し目買い②','')}</div>
+      <div class="f4">${tf('tp1','利確①','')}${tf('tp2','利確②','')}${tf('tp3','利確③','')}${tf('stop','損切り','')}</div>
+      <div class="f"><label>次の決算／レビュー</label><input data-k="review" value="${esc(e.review)}" placeholder="例：8月上旬"></div>
+      <div class="note">押し目買い・利確を価格で決めておけば、株価が到達した銘柄はスクリーナーに自動で並びます。</div>
+    </div>
+    <div class="foot"><button class="cancel" id="cancel">キャンセル</button><button class="save" id="save">保存</button></div>
+  </div></div>`;
+  const sheet=$('#modalRoot .sheet');
+  const collect=()=>{sheet.querySelectorAll('[data-k]').forEach(i=>e[i.dataset.k]=i.value);sheet.querySelectorAll('[data-sk]').forEach(i=>e.scores[i.dataset.sk]=parseInt(i.value));};
+  const live=()=>{collect();const sc=score100(e),[vt,vc]=verdict(e);$('#liveScore').textContent=sc;$('#liveScore').style.color=scoreColor(sc);$('#liveVerdict').innerHTML=`<span class="badge ${vc}">${vt}</span>`;};
+  sheet.querySelectorAll('[data-sk]').forEach(i=>i.oninput=()=>{$('#sv_'+i.dataset.sk).textContent=i.value;live();});
+  sheet.querySelectorAll('[data-k]').forEach(i=>i.oninput=live);live();
+  $('#ov').onclick=close;$('#x').onclick=close;$('#cancel').onclick=close;
+  $('#save').onclick=()=>{collect();close();saveEntry(e);};
+}
+function close(){$('#modalRoot').innerHTML='';}
+
+/* ---- settings ---- */
+function openConfig(){
+  const w=cfg.weights,t=cfg.thresholds;
+  const wf=SCOREKEYS.map(([k,l])=>`<div class="f"><label>${l}</label><div class="suffix"><input data-w="${k}" value="${Math.round(w[k]*100)}" inputmode="numeric"><span>%</span></div></div>`).join('');
+  $('#modalRoot').innerHTML=`<div class="ov" id="ov"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="shead"><h2>配点・判定基準</h2><button class="icbtn" id="x">&#10005;</button></div>
+    <div class="sbody"><div class="grp">スコア配点（合計100%）</div><div class="f2">${wf}</div><div class="wsum" id="wsum"></div>
+    <div class="grp">判定しきい値</div>
+    <div class="f"><label>「買い候補」: スコア ≧</label><input data-t="buyScore" value="${t.buyScore}" inputmode="numeric"></div>
+    <div class="f"><label>「買い候補」: かつ 上昇余地 ≧（%）</label><div class="suffix"><input data-t="buyUpside" value="${Math.round(t.buyUpside*100)}" inputmode="numeric"><span>%</span></div></div>
+    <div class="f"><label>「監視」: スコア ≧</label><input data-t="watch" value="${t.watch}" inputmode="numeric"></div>
+    <div class="grp">LINE通知</div>
+    <div class="f" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <label style="margin:0">売買シグナル発生時に通知する</label>
+      <input type="checkbox" id="lineEn" ${cfg.line_enabled?'checked':''} style="width:auto;transform:scale(1.4)">
+    </div>
+    <div class="f"><label>送信先 LINE userId</label><input id="lineId" value="${esc(cfg.line_user_id)}" placeholder="Uxxxxxxxxxxxxxxxx"></div>
+    <button id="lineTest" style="width:100%;padding:10px;border-radius:10px;background:var(--panel2);color:var(--txt);font-size:13px;margin-bottom:6px">テスト通知を送る</button>
+    <div class="hint">LINE公式アカウント(Messaging API)を作り、それを友だち追加した自分のuserIdを入力。チャネルアクセストークンはサーバー側に設定します（SETUP.md参照）。通知は株価更新（手動↻ or 日次cron）のタイミングで送られます。</div>
+    <div class="note">配点を変えると全銘柄のスコア・判定・スクリーナーが即再計算され、全端末に同期されます。</div></div>
+    <div class="foot"><button class="cancel" id="cancel">キャンセル</button><button class="save" id="save">適用して保存</button></div></div></div>`;
+  const sheet=$('#modalRoot .sheet');
+  const ck=()=>{let s=0;sheet.querySelectorAll('[data-w]').forEach(i=>s+=parseFloat(i.value)||0);const el=$('#wsum');el.textContent=`合計 ${s}%`+(s===100?'（OK）':'（100%に）');el.className='wsum '+(s===100?'ok':'no');return s;};
+  sheet.querySelectorAll('[data-w]').forEach(i=>i.oninput=ck);ck();
+  $('#lineTest').onclick=async()=>{
+    const to=$('#lineId').value.trim();
+    if(!to){alert('先に LINE userId を入力してください。');return;}
+    $('#lineTest').textContent='送信中…';
+    const {data,error}=await sb.functions.invoke('fetch-prices',{body:{test_line:true,to}});
+    $('#lineTest').textContent='テスト通知を送る';
+    if(error||(data&&data.error)){alert('送信失敗: '+((error&&error.message)||data.error||'不明')+'\n（チャネルトークン未設定の可能性。SETUP.md を確認）');}
+    else toast('テスト通知を送信しました');
+  };
+  $('#ov').onclick=close;$('#x').onclick=close;$('#cancel').onclick=close;
+  $('#save').onclick=async()=>{if(ck()!==100){alert('配点の合計を100%にしてください。');return;}
+    sheet.querySelectorAll('[data-w]').forEach(i=>cfg.weights[i.dataset.w]=(parseFloat(i.value)||0)/100);
+    sheet.querySelectorAll('[data-t]').forEach(i=>{const k=i.dataset.t,v=parseFloat(i.value)||0;cfg.thresholds[k]=(k==='buyUpside')?v/100:v;});
+    cfg.line_enabled=$('#lineEn').checked;cfg.line_user_id=$('#lineId').value.trim();
+    close();await saveCfg();render();};
+}
+
+/* ---- CSV ---- */
+function exportCSV(){
+  const head=['テーマ','銘柄名','コード','市場','現在値','上昇余地%','将来性スコア','判定','保有株数','平均取得単価','取得額','評価額','評価損益','含み益率%','売上CAGR%','営業利益率%','PER','PEG','配当利回り%','妥当株価','押し目買い1','押し目買い2','利確1','利確2','利確3','損切り','次レビュー','仮説','投資前提'];
+  const rows=entries.map(e=>{const up=upside(e),pp=pnlPct(e);return[e.theme,e.name,e.code,e.market,livePrice(e)??'',up==null?'':(up*100).toFixed(1),score100(e),verdict(e)[0],shares(e)??'',avgCost(e)??'',cost(e)??'',mktVal(e)??'',pnl(e)??'',pp==null?'':(pp*100).toFixed(1),e.salesCagr,e.opm,e.per,e.peg,e.yld,e.target,e.buy1,e.buy2,e.tp1,e.tp2,e.tp3,e.stop,e.review,e.hyp,e.premise];});
+  const csv=[head,...rows].map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`investment_ledger_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('CSVを書き出しました');
+}
+
+/* ---- boot ---- */
+async function boot(){
+  shell();await loadAll();render();
+  // keep devices fresh
+  window.addEventListener('focus',async()=>{await loadAll();render();});
+  try{sb.channel('hold').on('postgres_changes',{event:'*',schema:'public',table:'holdings',filter:'user_id=eq.'+user.id},async()=>{await loadAll();render();}).subscribe();}catch(_){}
+}
+async function init(){
+  if(SUPABASE_URL.includes('YOUR-PROJECT')||SUPABASE_ANON_KEY.includes('YOUR-ANON')){
+    $('#app').innerHTML=`<div class="wrap"><div class="banner" style="margin-top:24px">
+      セットアップ未完了：このファイル上部の <b>SUPABASE_URL</b> と <b>SUPABASE_ANON_KEY</b> を、ご自身のSupabaseプロジェクトの値に置き換えてください。手順は同梱の SETUP.md を参照。</div></div>`;
+    return;
+  }
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  const {data}=await sb.auth.getSession();
+  if(data.session){user=data.session.user;await boot();}
+  else renderAuth();
+}
+init();
+</script>
