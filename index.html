@@ -170,8 +170,8 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;bac
 /* =========================================================
    1) SETUP — Supabaseの値をここに入れてください
    ========================================================= */
-const SUPABASE_URL = "https://zaxjojpmeqrvrocivedo.supabase.co";   // ← Project URL
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpheGpvanBtZXFydnJvY2l2ZWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMDI5NzQsImV4cCI6MjA5Nzg3ODk3NH0.KLmmif5Dxgt-FS872Oskm4Hl8WKvOSFfW0ab8oaebvM";                 // ← anon public key
+const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";   // ← Project URL
+const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";                 // ← anon public key
 /* ========================================================= */
 
 const $ = (s,r=document)=>r.querySelector(s);
@@ -233,35 +233,42 @@ function renderAuth(msg){
   $('#app').innerHTML=`<div class="authwrap">
     <div class="ey">Research Ledger</div>
     <h1>AI 次フェーズ投資レジャー</h1>
-    <p>メールで同期。同じメールでログインすれば、どの端末でも同じ台帳が見られます。</p>
+    <p>メールとパスワードで登録・ログイン。同じメールでログインすれば、どの端末でも同じ台帳が見られます。</p>
     <div class="authcard" id="ac">
       <label>メールアドレス</label>
       <input id="email" type="email" inputmode="email" placeholder="you@example.com" autocomplete="email">
-      <button id="sendBtn">確認コードを送る</button>
+      <label>パスワード（6文字以上）</label>
+      <input id="pw" type="password" placeholder="••••••••" autocomplete="current-password">
+      <button id="loginBtn">ログイン</button>
+      <button id="signupBtn" style="background:var(--panel2);color:var(--txt);margin-top:8px">新規登録（初回はこちら）</button>
       <div class="authmsg" id="amsg">${msg||''}</div>
     </div></div>`;
-  $('#sendBtn').onclick=sendCode;
-  $('#email').onkeydown=e=>{if(e.key==='Enter')sendCode();};
+  $('#loginBtn').onclick=()=>doAuth('login');
+  $('#signupBtn').onclick=()=>doAuth('signup');
+  $('#pw').onkeydown=e=>{if(e.key==='Enter')doAuth('login');};
 }
-async function sendCode(){
-  const email=$('#email').value.trim();
+async function doAuth(mode){
+  const email=$('#email').value.trim(), pw=$('#pw').value;
   if(!email){$('#amsg').textContent='メールアドレスを入力してください。';return;}
-  $('#sendBtn').disabled=true;$('#amsg').textContent='送信中…';
-  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
-  if(error){$('#amsg').textContent='送信エラー: '+error.message;$('#sendBtn').disabled=false;return;}
-  $('#ac').innerHTML=`<label>${esc(email)} に届いた6桁コード</label>
-    <input id="code" inputmode="numeric" maxlength="6" placeholder="123456">
-    <button id="verBtn">ログイン</button>
-    <div class="authmsg" id="amsg">メールの確認コードを入力してください。</div>`;
-  $('#verBtn').onclick=()=>verify(email);
-  $('#code').onkeydown=e=>{if(e.key==='Enter')verify(email);};
-  $('#code').focus();
-}
-async function verify(email){
-  const token=$('#code').value.trim();
-  $('#verBtn').disabled=true;$('#amsg').textContent='確認中…';
-  const {data,error}=await sb.auth.verifyOtp({email,token,type:'email'});
-  if(error){$('#amsg').textContent='コードが違うようです: '+error.message;$('#verBtn').disabled=false;return;}
+  if(pw.length<6){$('#amsg').textContent='パスワードは6文字以上にしてください。';return;}
+  $('#loginBtn').disabled=true;$('#signupBtn').disabled=true;
+  $('#amsg').textContent=mode==='signup'?'登録中…':'ログイン中…';
+  let res;
+  if(mode==='signup') res=await sb.auth.signUp({email,password:pw});
+  else res=await sb.auth.signInWithPassword({email,password:pw});
+  const {data,error}=res;
+  if(error){
+    let m=error.message;
+    if(/already registered/i.test(m)) m='このメールは登録済みです。「ログイン」を押してください。';
+    else if(/Invalid login/i.test(m)) m='メールかパスワードが違います。初回なら「新規登録」を押してください。';
+    $('#amsg').textContent=m;
+    $('#loginBtn').disabled=false;$('#signupBtn').disabled=false;return;
+  }
+  if(!data.session){
+    // メール確認がまだ有効な場合
+    $('#amsg').textContent='メール確認が有効になっています。Supabaseの Authentication → Sign In / Providers → Email で「Confirm email」をオフにしてから、もう一度お試しください。';
+    $('#loginBtn').disabled=false;$('#signupBtn').disabled=false;return;
+  }
   user=data.user; await boot();
 }
 
