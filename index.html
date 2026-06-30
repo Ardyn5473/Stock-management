@@ -701,4 +701,35 @@ async function init(){
   else renderAuth();
 }
 init();
+<script>
+/* JSONインポート機能（追記のみ・既存コード非変更） */
+(function(){
+  function addImportBtn(){
+    const bar=document.querySelector('.hbtns');
+    if(!bar||document.getElementById('impBtn'))return;
+    const btn=document.createElement('button');
+    btn.id='impBtn';btn.className='icbtn';btn.title='JSONインポート';btn.innerHTML='&#8682;';
+    bar.insertBefore(btn,bar.querySelector('.addbtn'));
+    btn.onclick=()=>{
+      const inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';
+      inp.onchange=async()=>{
+        const f=inp.files[0];if(!f)return;
+        let arr;try{arr=JSON.parse(await f.text());}catch(_){toast('JSONの解析に失敗');return;}
+        if(!Array.isArray(arr)){toast('配列形式のJSONを読み込んでください');return;}
+        if(typeof user==='undefined'||!user){toast('先にログインしてください');return;}
+        let n=0;
+        for(const item of arr){
+          const e=Object.assign(blank(),item);
+          e.scores=Object.assign(blank().scores,item.scores||{});
+          e.__new=true;e.id=null;
+          await saveEntry(e);n++;
+          await new Promise(r=>setTimeout(r,200));
+        }
+        toast(n+'件をインポートしました');
+      };
+      inp.click();
+    };
+  }
+  setInterval(()=>{document.querySelector('.hbtns')&&addImportBtn();},800);
+})();
 </script>
