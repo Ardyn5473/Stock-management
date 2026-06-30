@@ -181,9 +181,24 @@ const fmt = (v,d=0)=> v==null?'—':v.toLocaleString('ja-JP',{minimumFractionDig
 const pct = v => v==null?'—':(v*100).toFixed(1)+'%';
 const toast=m=>{const t=document.createElement('div');t.className='toast';t.textContent=m;$('#toastRoot').appendChild(t);setTimeout(()=>t.remove(),2600);};
 
-const THEMES=['電力・エネルギーインフラ','フィジカルAI・ロボティクス','AI収益化・AIエージェント','継続インフラ本流（半導体・MLCC）'];
+const THEME_PALETTE=['#5BA9D6','#56B981','#E0A640','#B08CD6','#E0664F','#4FB0A8','#D68CB0','#8CA0D6','#C9A227','#7FB069','#C06C84','#6C9BD6','#D69E5B','#9E8CD6','#5BBFA8','#D6708C'];
+const DEFAULT_THEMES=['電力・エネルギーインフラ','フィジカルAI・ロボティクス','AI収益化・AIエージェント','継続インフラ本流（半導体・MLCC）'];
+let THEMES=DEFAULT_THEMES.slice();
+function themeList(){return (cfg.themes&&cfg.themes.length)?cfg.themes:DEFAULT_THEMES;}
+// 注視指標つき仮説テンプレ（分野別）。cfg.themeTpl のユーザー上書きが優先、無ければ既定、無ければ汎用。
+const TPL_GENERIC="【需要】この分野の市場が年◯%成長（根拠）。\n【この企業】◯◯が前年比+◯%。\n【効く条件】◯◯が続く限り上昇。\n【注視指標】（定量で監視する指標を列挙）";
+const DEFAULT_TPL={
+ "電力・エネルギーインフラ":"【需要】DC電力需要が◯◯TWh→◯◯TWh（年◯%）。\n【この企業】受電容量/受注残が前年比+◯%、PPA契約◯GW。\n【効く条件】受注残の前年比プラスが続く限り増収増益。\n【注視指標】受注残前年比 / 受電容量(MW) / 送配電capex / パワー半導体需要",
+ "フィジカルAI・ロボティクス":"【需要】人手不足×自動化でロボ市場が年◯%成長。\n【この企業】ロボ受注高 前年比+◯%、自動化売上比率◯%、海外比率◯%。\n【効く条件】受注高の前年比が伸び続ける限り。\n【注視指標】ロボ受注高前年比 / 自動化売上比率 / 営業利益率 / 海外比率",
+ "AI収益化・AIエージェント":"【需要】インフラ整備→収益化フェーズへ。AI売上が拡大。\n【この企業】AI関連売上/ARR比率◯%、全社増収率◯%、営業利益率◯%。\n【効く条件】AI売上比率の上昇が続く限り。\n【注視指標】AI売上比率 / ARR成長率 / 営業利益率 / 解約率",
+ "継続インフラ本流（半導体・MLCC）":"【需要】ハイパースケーラーcapex継続。ただし高値圏・循環注意。\n【この企業】受注残◯%、在庫水準、PER◯倍。\n【効く条件】capexガイダンス上方かつPERが◯倍以下のとき。\n【注視指標】capexガイダンス / 受注残 / 在庫 / 投資対収益比率"
+};
+function tplFor(t){return (cfg.themeTpl&&cfg.themeTpl[t])||DEFAULT_TPL[t]||TPL_GENERIC;}
+function themeColor(t){const list=themeList();let i=list.indexOf(t);if(i<0){let h=0;for(const c of t)h=(h*31+c.charCodeAt(0))>>>0;i=h;}return THEME_PALETTE[i%THEME_PALETTE.length];}
+// union of configured themes and themes actually present in entries (so nothing becomes unfilterable)
+function allThemes(){const set=new Set(themeList());entries.forEach(e=>{if(e.theme)set.add(e.theme);});return [...set];}
 const SCOREKEYS=[['growth','市場成長性'],['moat','競争優位'],['momentum','業績モメンタム'],['fin','財務健全性'],['val','ﾊﾞﾘｭｴｰｼｮﾝ妥当性'],['fit','テーマ適合度']];
-const DEFAULT_CFG={weights:{growth:.25,moat:.20,momentum:.20,fin:.10,val:.15,fit:.10},thresholds:{buyScore:70,buyUpside:.20,watch:55},line_user_id:'',line_enabled:false};
+const DEFAULT_CFG={weights:{growth:.25,moat:.20,momentum:.20,fin:.10,val:.15,fit:.10},thresholds:{buyScore:70,buyUpside:.20,watch:55},line_user_id:'',line_enabled:false,themes:DEFAULT_THEMES.slice(),themeTpl:{}};
 
 let sb=null, user=null, entries=[], cfg=structuredClone(DEFAULT_CFG);
 let tab='ledger', filterTheme='all', sortBy='score';
@@ -276,7 +291,7 @@ async function doAuth(mode){
    Data sync (Supabase)
    ========================================================= */
 const setSync=s=>{const d=$('#syncdot');if(d)d.className='syncdot '+s;};
-function rowToEntry(r){return{id:r.id,name:r.name||'',code:r.code||'',market:r.market||'東証',theme:r.theme||THEMES[0],
+function rowToEntry(r){return{id:r.id,name:r.name||'',code:r.code||'',market:r.market||'東証',theme:r.theme||themeList()[0],
   hyp:r.hyp||'',premise:r.premise||'',mktCagr:r.mkt_cagr??'',salesCagr:r.sales_cagr??'',opm:r.opm??'',backlog:r.backlog??'',
   share:r.share||'',price:r.price??'',per:r.per??'',peg:r.peg??'',yld:r.yld??'',
   target:r.target??'',buy1:r.buy1??'',buy2:r.buy2??'',tp1:r.tp1??'',tp2:r.tp2??'',tp3:r.tp3??'',stop:r.stop??'',review:r.review||'',
@@ -296,7 +311,7 @@ async function loadAll(){
   if(error){setSync('err');toast('読み込みエラー: '+error.message);return;}
   entries=(data||[]).map(rowToEntry);
   const {data:s}=await sb.from('settings').select('*').eq('user_id',user.id).maybeSingle();
-  if(s){cfg={weights:Object.assign({},DEFAULT_CFG.weights,s.weights||{}),thresholds:Object.assign({},DEFAULT_CFG.thresholds,s.thresholds||{}),line_user_id:s.line_user_id||'',line_enabled:!!s.line_enabled};}
+  if(s){cfg={weights:Object.assign({},DEFAULT_CFG.weights,s.weights||{}),thresholds:Object.assign({},DEFAULT_CFG.thresholds,s.thresholds||{}),line_user_id:s.line_user_id||'',line_enabled:!!s.line_enabled,themes:(s.themes&&s.themes.length)?s.themes:DEFAULT_THEMES.slice(),themeTpl:s.theme_templates||{}};}
   setSync('ok');
 }
 async function saveEntry(e){
@@ -319,7 +334,13 @@ async function delEntry(id){
 }
 async function saveCfg(){
   setSync('busy');
-  const {error}=await sb.from('settings').upsert({user_id:user.id,weights:cfg.weights,thresholds:cfg.thresholds,line_user_id:cfg.line_user_id,line_enabled:cfg.line_enabled,updated_at:new Date().toISOString()});
+  const base={user_id:user.id,weights:cfg.weights,thresholds:cfg.thresholds,line_user_id:cfg.line_user_id,line_enabled:cfg.line_enabled,updated_at:new Date().toISOString()};
+  let {error}=await sb.from('settings').upsert({...base,themes:cfg.themes,theme_templates:cfg.themeTpl});
+  if(error){
+    // themes / theme_templates 列が未マイグレーションの場合はそれ以外を保存
+    ({error}=await sb.from('settings').upsert(base));
+    if(!error) toast('分野・テンプレの同期には migration_v3/v4.sql の実行が必要です');
+  }
   if(error){setSync('err');toast('設定保存エラー: '+error.message);return;}
   setSync('ok');
 }
@@ -376,7 +397,7 @@ function renderLedger(){
   const priced=entries.filter(e=>livePrice(e)!=null).length;
   let list=entries.filter(e=>filterTheme==='all'||e.theme===filterTheme);
   list.sort((a,b)=>sortBy==='name'?(a.name||'').localeCompare(b.name||'','ja'):sortBy==='upside'?(upside(b)??-9)-(upside(a)??-9):score100(b)-score100(a));
-  const chips=['all',...THEMES].map(t=>`<button class="chip ${filterTheme===t?'on':''}" data-th="${esc(t)}">${esc(t==='all'?'すべて':t.replace('（半導体・MLCC）',''))}</button>`).join('');
+  const chips=['all',...allThemes()].map(t=>`<button class="chip ${filterTheme===t?'on':''}" data-th="${esc(t)}">${esc(t==='all'?'すべて':t.replace('（半導体・MLCC）',''))}</button>`).join('');
   $('#view').innerHTML=`
     <div class="stats">
       <div class="stat"><div class="k">登録</div><div class="v mono">${n}<small> 件</small></div></div>
@@ -423,9 +444,8 @@ function renderPortfolio(){
   const plc=totPnl>=0?'var(--buy)':'var(--bad)';
   // theme allocation
   const byTheme={};held.forEach(e=>{byTheme[e.theme]=(byTheme[e.theme]||0)+mktVal(e);});
-  const themeColors={'電力・エネルギーインフラ':'#5BA9D6','フィジカルAI・ロボティクス':'#56B981','AI収益化・AIエージェント':'#E0A640','継続インフラ本流（半導体・MLCC）':'#B08CD6'};
   const alloc=Object.entries(byTheme).sort((a,b)=>b[1]-a[1]).map(([t,v])=>{
-    const w=totVal>0?v/totVal*100:0;const col=themeColors[t]||'var(--gold)';
+    const w=totVal>0?v/totVal*100:0;const col=themeColor(t);
     return `<div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px">
         <span style="color:var(--muted)">${esc(t.replace('（半導体・MLCC）',''))}</span>
@@ -510,9 +530,10 @@ function ladder(e){
 }
 
 /* ---- editor ---- */
-function blank(){return{__new:true,id:null,theme:THEMES[0],name:'',code:'',market:'東証',hyp:'',premise:'',mktCagr:'',salesCagr:'',opm:'',backlog:'',share:'',price:'',per:'',peg:'',yld:'',shares:'',avg_cost:'',scores:{growth:3,moat:3,momentum:3,fin:3,val:3,fit:3},target:'',buy1:'',buy2:'',tp1:'',tp2:'',tp3:'',stop:'',review:''};}
+function blank(){return{__new:true,id:null,theme:themeList()[0],name:'',code:'',market:'東証',hyp:'',premise:'',mktCagr:'',salesCagr:'',opm:'',backlog:'',share:'',price:'',per:'',peg:'',yld:'',shares:'',avg_cost:'',scores:{growth:3,moat:3,momentum:3,fin:3,val:3,fit:3},target:'',buy1:'',buy2:'',tp1:'',tp2:'',tp3:'',stop:'',review:''};}
 function openEditor(id){
   const e=id?structuredClone(entries.find(x=>x.id===id)):blank();
+  if(!id && !e.hyp) e.hyp=tplFor(e.theme);
   const tf=(k,l,suf,ph='')=>`<div class="f"><label>${l}</label>${suf?`<div class="suffix"><input data-k="${k}" value="${esc(e[k])}" inputmode="decimal" placeholder="${ph}"><span>${suf}</span></div>`:`<input data-k="${k}" value="${esc(e[k])}" placeholder="${ph}">`}</div>`;
   const sliders=SCOREKEYS.map(([k,l])=>`<div class="sl"><div class="top"><b>${l}</b><span class="vv" id="sv_${k}">${e.scores[k]}</span></div><input type="range" min="1" max="5" step="1" value="${e.scores[k]}" data-sk="${k}"></div>`).join('');
   $('#modalRoot').innerHTML=`<div class="ov" id="ov"><div class="sheet" onclick="event.stopPropagation()">
@@ -520,10 +541,10 @@ function openEditor(id){
     <div class="sbody">
       <div class="grp">基本</div>
       <div class="f"><label>銘柄名</label><input data-k="name" value="${esc(e.name)}" placeholder="例：◯◯電機"></div>
-      <div class="f2"><div class="f"><label>テーマ</label><select data-k="theme">${THEMES.map(t=>`<option ${e.theme===t?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="f2"><div class="f"><label>テーマ</label><select data-k="theme">${[...new Set([...themeList(),e.theme].filter(Boolean))].map(t=>`<option ${e.theme===t?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="f2">${tf('code','コード','','例 6981')}${tf('market','市場','')}</div></div>
       <div class="hint">株価の自動更新には、コード（例 6981）と市場（東証/米国）が必要です。</div>
-      <div class="f" style="margin-top:11px"><label>仮説・ストーリー（必ず数字で）</label><textarea data-k="hyp" placeholder="例：TAMが年20%成長→売上CAGR15%→受注残+30%が続く限り上昇">${esc(e.hyp)}</textarea></div>
+      <div class="f" style="margin-top:11px"><label style="display:flex;justify-content:space-between;align-items:center">仮説・ストーリー（必ず数字で）<button id="tplBtn" type="button" style="font-size:11px;color:var(--gold);padding:2px 8px;border:1px solid var(--gold-dim);border-radius:7px">注視指標テンプレを挿入</button></label><textarea data-k="hyp" placeholder="例：TAMが年20%成長→売上CAGR15%→受注残+30%が続く限り上昇" style="min-height:96px">${esc(e.hyp)}</textarea></div>
       <div class="f"><label>投資前提（崩れたら撤退）</label><input data-k="premise" value="${esc(e.premise)}" placeholder="例：受注残の前年比がマイナス転換"></div>
       <div class="grp">ファンダメンタルズ</div>
       <div class="f4">${tf('mktCagr','市場CAGR','%')}${tf('salesCagr','売上CAGR','%')}${tf('opm','営業利益率','%')}${tf('backlog','受注残前年比','%')}</div>
@@ -551,6 +572,19 @@ function openEditor(id){
   const live=()=>{collect();const sc=score100(e),[vt,vc]=verdict(e);$('#liveScore').textContent=sc;$('#liveScore').style.color=scoreColor(sc);$('#liveVerdict').innerHTML=`<span class="badge ${vc}">${vt}</span>`;};
   sheet.querySelectorAll('[data-sk]').forEach(i=>i.oninput=()=>{$('#sv_'+i.dataset.sk).textContent=i.value;live();});
   sheet.querySelectorAll('[data-k]').forEach(i=>i.oninput=live);live();
+  // ---- 注視指標テンプレ ----
+  const hypEl=sheet.querySelector('[data-k="hyp"]');
+  const themeEl=sheet.querySelector('[data-k="theme"]');
+  let curTpl=tplFor(e.theme);
+  $('#tplBtn').onclick=()=>{
+    if(hypEl.value.trim() && hypEl.value!==curTpl && !confirm('現在の仮説を、この分野の注視指標テンプレで置き換えますか？')) return;
+    hypEl.value=tplFor(themeEl.value); curTpl=hypEl.value; e.hyp=hypEl.value; live();
+  };
+  themeEl.addEventListener('change',()=>{
+    const t=themeEl.value;
+    if(!hypEl.value.trim() || hypEl.value===curTpl){ hypEl.value=tplFor(t); e.hyp=hypEl.value; }
+    curTpl=tplFor(t); live();
+  });
   $('#ov').onclick=close;$('#x').onclick=close;$('#cancel').onclick=close;
   $('#save').onclick=()=>{collect();close();saveEntry(e);};
 }
@@ -562,7 +596,14 @@ function openConfig(){
   const wf=SCOREKEYS.map(([k,l])=>`<div class="f"><label>${l}</label><div class="suffix"><input data-w="${k}" value="${Math.round(w[k]*100)}" inputmode="numeric"><span>%</span></div></div>`).join('');
   $('#modalRoot').innerHTML=`<div class="ov" id="ov"><div class="sheet" onclick="event.stopPropagation()">
     <div class="shead"><h2>配点・判定基準</h2><button class="icbtn" id="x">&#10005;</button></div>
-    <div class="sbody"><div class="grp">スコア配点（合計100%）</div><div class="f2">${wf}</div><div class="wsum" id="wsum"></div>
+    <div class="sbody"><div class="grp">分野（テーマ）の管理</div>
+    <div id="themeList"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <input id="newTheme" placeholder="新しい分野を追加（例：光通信・ネットワーク）" style="flex:1;background:var(--ink);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px 11px;font-size:13px">
+      <button id="addTheme" style="padding:0 16px;border-radius:10px;background:var(--panel2);color:var(--txt);font-weight:600">＋</button>
+    </div>
+    <div class="hint">「指標」ボタンで分野ごとの注視指標テンプレを編集できます。銘柄を追加するとその分野のテンプレが仮説欄に自動で入ります。削除しても、その分野を使う銘柄は残ります（編集で付け替え可）。</div>
+    <div class="grp">スコア配点（合計100%）</div><div class="f2">${wf}</div><div class="wsum" id="wsum"></div>
     <div class="grp">判定しきい値</div>
     <div class="f"><label>「買い候補」: スコア ≧</label><input data-t="buyScore" value="${t.buyScore}" inputmode="numeric"></div>
     <div class="f"><label>「買い候補」: かつ 上昇余地 ≧（%）</label><div class="suffix"><input data-t="buyUpside" value="${Math.round(t.buyUpside*100)}" inputmode="numeric"><span>%</span></div></div>
@@ -578,6 +619,33 @@ function openConfig(){
     <div class="note">配点を変えると全銘柄のスコア・判定・スクリーナーが即再計算され、全端末に同期されます。</div></div>
     <div class="foot"><button class="cancel" id="cancel">キャンセル</button><button class="save" id="save">適用して保存</button></div></div></div>`;
   const sheet=$('#modalRoot .sheet');
+  // ---- theme manager (名前 + 注視指標テンプレ) ----
+  let workThemes=themeList().slice();
+  let workTpls=workThemes.map(t=>tplFor(t));
+  const openTpl=new Set();
+  const drawThemes=()=>{
+    $('#themeList').innerHTML=workThemes.map((t,i)=>`
+      <div style="margin-bottom:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="width:10px;height:10px;border-radius:3px;background:${themeColor(t)};flex-shrink:0"></span>
+          <input data-ti="${i}" value="${esc(t)}" style="flex:1;background:var(--ink);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 10px;font-size:13px">
+          <button data-ttpl="${i}" title="注視指標テンプレ" style="height:34px;padding:0 10px;border-radius:9px;background:var(--panel2);color:${openTpl.has(i)?'var(--gold)':'var(--muted)'};font-size:11px">指標</button>
+          <button data-trm="${i}" title="削除" style="width:34px;height:34px;border-radius:9px;background:var(--panel2);color:var(--muted)">×</button>
+        </div>
+        ${openTpl.has(i)?`<textarea data-tt="${i}" placeholder="この分野の注視指標テンプレ（銘柄追加時に自動で入ります）" style="width:100%;margin-top:6px;min-height:92px;background:var(--ink);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:9px 10px;font-size:12px;line-height:1.5;resize:vertical">${esc(workTpls[i])}</textarea>`:''}
+      </div>`).join('');
+    $('#themeList').querySelectorAll('[data-ti]').forEach(inp=>inp.oninput=()=>{workThemes[+inp.dataset.ti]=inp.value;});
+    $('#themeList').querySelectorAll('[data-tt]').forEach(inp=>inp.oninput=()=>{workTpls[+inp.dataset.tt]=inp.value;});
+    $('#themeList').querySelectorAll('[data-ttpl]').forEach(b=>b.onclick=()=>{const i=+b.dataset.ttpl;openTpl.has(i)?openTpl.delete(i):openTpl.add(i);drawThemes();});
+    $('#themeList').querySelectorAll('[data-trm]').forEach(b=>b.onclick=()=>{
+      if(workThemes.length<=1){alert('分野は1つ以上必要です。');return;}
+      const i=+b.dataset.trm;workThemes.splice(i,1);workTpls.splice(i,1);openTpl.delete(i);drawThemes();});
+  };
+  drawThemes();
+  $('#addTheme').onclick=()=>{const v=$('#newTheme').value.trim();if(!v)return;
+    if(workThemes.includes(v)){alert('同じ分野が既にあります。');return;}
+    workThemes.push(v);workTpls.push(TPL_GENERIC);$('#newTheme').value='';drawThemes();};
+  $('#newTheme').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#addTheme').click();}};
   const ck=()=>{let s=0;sheet.querySelectorAll('[data-w]').forEach(i=>s+=parseFloat(i.value)||0);const el=$('#wsum');el.textContent=`合計 ${s}%`+(s===100?'（OK）':'（100%に）');el.className='wsum '+(s===100?'ok':'no');return s;};
   sheet.querySelectorAll('[data-w]').forEach(i=>i.oninput=ck);ck();
   $('#lineTest').onclick=async()=>{
@@ -591,6 +659,12 @@ function openConfig(){
   };
   $('#ov').onclick=close;$('#x').onclick=close;$('#cancel').onclick=close;
   $('#save').onclick=async()=>{if(ck()!==100){alert('配点の合計を100%にしてください。');return;}
+    const names=workThemes.map(t=>t.trim());
+    const cleaned=[...new Set(names.filter(Boolean))];
+    if(!cleaned.length){alert('分野を1つ以上残してください。');return;}
+    cfg.themes=cleaned;
+    const tpl={};names.forEach((nm,i)=>{if(nm&&workTpls[i]&&workTpls[i].trim())tpl[nm]=workTpls[i];});
+    cfg.themeTpl=tpl;
     sheet.querySelectorAll('[data-w]').forEach(i=>cfg.weights[i.dataset.w]=(parseFloat(i.value)||0)/100);
     sheet.querySelectorAll('[data-t]').forEach(i=>{const k=i.dataset.t,v=parseFloat(i.value)||0;cfg.thresholds[k]=(k==='buyUpside')?v/100:v;});
     cfg.line_enabled=$('#lineEn').checked;cfg.line_user_id=$('#lineId').value.trim();
